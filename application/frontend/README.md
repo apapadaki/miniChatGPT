@@ -9,7 +9,15 @@
 
 ## Development
 
-From your terminal:
+From your terminal in the /frontend directory:
+
+- Install packages
+
+```sh
+npm install
+```
+
+- Start the web server in dev mode
 
 ```sh
 npm run dev
