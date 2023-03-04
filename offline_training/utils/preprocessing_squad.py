@@ -8,6 +8,9 @@ This file is based on the original code from the paper: https://arxiv.org/abs/16
 and borrows from repo: https://github.com/kushalj001/pytorch-question-answering
 '''
 
+nlp = spacy.load('en_core_web_sm')
+
+
 def load_json(filename):
     '''
     Input:
@@ -69,7 +72,6 @@ def remove_redundant_symbols(input_data):
     return re.sub(r'\s', ' ', input_data)
 
 
-
 def aggregate_text(dataframes):
     '''
     Aggregate the text from context and questions to build a vocabulary
@@ -91,7 +93,6 @@ def aggregate_text(dataframes):
     return text_list
 
 
-
 def create_word_vocabulary(text_list):
     '''
     Create a world vocabulary from text.
@@ -101,11 +102,10 @@ def create_word_vocabulary(text_list):
         dict idx2word: index to word mapping
         list word_vocab: list of words sorted by frequency
     '''
-    nlp = spacy.load('en_core_web_sm')
     words_list = []
     for sentence in text_list:
-        for word in nlp(sentence, disable=['parser','tagger','ner','lemmatizer']):
-            words_list.append(word)
+        for word in nlp(sentence, disable=['parser', 'tagger', 'ner', 'lemmatizer']):
+            words_list.append(word.text)
 
     word_counter = Counter(words_list)
 
@@ -121,35 +121,94 @@ def create_word_vocabulary(text_list):
 
     idx2word = {v: k for k, v in word2idx.items()}
 
-    return  word2idx, idx2word, word_vocab
+    return word2idx, idx2word, word_vocab
 
 
-def build_char_vocab(vocab_text):
+def cq_to_id_converter(text, word2idx):
     '''
-    Create a character vocabulary from text
-    :param text_list: aggregated list of context and questions
-    :returns
-        dict char2idx: character to index mapping of words
-        list char_vocab: list of characters sorted by frequency
+    Converts context and questions text to their respective ids by mapping each word
+    using word2idx. Input text is tokenized using spacy tokenizer first.
+
+    :param str text: context or question text to be converted
+    :param dict word2idx: word to id mapping
+    :returns list text_ids: list of mapped ids
+
+    :raises assertion error: sanity check
+
     '''
 
-    chars = []
-    for sent in vocab_text:
-        for ch in sent:
-            chars.append(ch)
+    text_tokens = [w.text for w in nlp(text, disable=['parser', 'tagger', 'ner', 'lemmatizer'])]
+    text_ids = [word2idx[word] for word in text_tokens]
 
-    char_counter = Counter(chars)
-    char_vocab = sorted(char_counter, key=char_counter.get, reverse=True)
-    print(f"raw-char-vocab length: {len(char_vocab)}")
-    high_freq_char = [char for char, count in char_counter.items() if count >= 20]
-    char_vocab = list(set(char_vocab).intersection(set(high_freq_char)))
-    print(f"char-vocab-intersect length: {len(char_vocab)}")
-    char_vocab.insert(0, '<unk>')
-    char_vocab.insert(1, '<pad>')
-    char2idx = {char: idx for idx, char in enumerate(char_vocab)}
-    print(f"char2idx-length: {len(char2idx)}")
-
-    return char2idx, char_vocab
+    assert len(text_ids) == len(text_tokens)
+    return text_ids
 
 
+def get_error_indices(df, idx2word):
+    '''
+    Finds and returns the indices with tokenization errors.
+    :param df: dataframe w/ training or testing data
+    :param idx2word: mapping of ids to words
+    :return:
+        err_idx: indices with tokenization errors
+    '''
 
+    start_value_error = []
+    end_value_error = []
+    assert_error = []
+    # Iterate over DataFrame rows
+    for index, row in df.iterrows():
+
+        answer_tokens = [w.text for w in nlp(row['answer'], disable=['parser', 'tagger', 'ner', 'lemmatizer'])]
+
+        context_span = [(word.idx, word.idx + len(word.text))
+                        for word in nlp(row['context'], disable=['parser', 'tagger', 'ner', 'lemmatizer'])]
+
+        starts, ends = zip(*context_span)
+
+        answer_start, answer_end = row['label']
+
+        try:
+            start_idx = starts.index(answer_start)
+        except:
+            start_value_error.append(index)
+        try:
+            end_idx = ends.index(answer_end)
+        except:
+            end_value_error.append(index)
+
+        try:
+            assert idx2word[row['context_ids'][start_idx]] == answer_tokens[0]
+            assert idx2word[row['context_ids'][end_idx]] == answer_tokens[-1]
+        except:
+            assert_error.append(index)
+    err_idx = set(start_value_error + end_value_error + assert_error)
+    print(f"Number of error indices: {len(err_idx)}")
+    return err_idx
+
+
+def index_answer(row, idx2word):
+    '''
+
+    :param row: row of the dataframe or one training example
+    :param idx2word:
+    :return: tuple of start and end positions of answer by calculating
+    spans.
+    '''
+
+    context_span = [(word.idx, word.idx + len(word.text)) for word in
+                    nlp(row.context, disable=['parser', 'tagger', 'ner', 'lemmatizer'])]
+    starts, ends = zip(*context_span)
+
+    answer_start, answer_end = row.label
+    start_idx = starts.index(answer_start)
+
+    end_idx = ends.index(answer_end)
+
+    ans_toks = [w.text for w in nlp(row.answer, disable=['parser', 'tagger', 'ner', 'lemmatizer'])]
+    ans_start = ans_toks[0]
+    ans_end = ans_toks[-1]
+    assert idx2word[row.context_ids[start_idx]] == ans_start
+    assert idx2word[row.context_ids[end_idx]] == ans_end
+
+    return [start_idx, end_idx]
