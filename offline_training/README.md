@@ -33,6 +33,15 @@ Install the following packages:
 
 * `conda install -c conda-forge notebook`
 
+### Pre-process dataset
+```bash
+conda activate minichatgpt # run this command if environment is not already activated
+
+jupyter notebook # start notebook server
+```
+Select `notebooks\{dataset}_data_preprocessing.ipynb` notebook, where `dataset` is one of the supported datasets, and run all cells.
+
+
 TBC
 
 [//]: # (### Download Pre-trained models)
