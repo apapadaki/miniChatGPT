@@ -124,5 +124,32 @@ def create_word_vocabulary(text_list):
     return  word2idx, idx2word, word_vocab
 
 
+def build_char_vocab(vocab_text):
+    '''
+    Create a character vocabulary from text
+    :param text_list: aggregated list of context and questions
+    :returns
+        dict char2idx: character to index mapping of words
+        list char_vocab: list of characters sorted by frequency
+    '''
+
+    chars = []
+    for sent in vocab_text:
+        for ch in sent:
+            chars.append(ch)
+
+    char_counter = Counter(chars)
+    char_vocab = sorted(char_counter, key=char_counter.get, reverse=True)
+    print(f"raw-char-vocab length: {len(char_vocab)}")
+    high_freq_char = [char for char, count in char_counter.items() if count >= 20]
+    char_vocab = list(set(char_vocab).intersection(set(high_freq_char)))
+    print(f"char-vocab-intersect length: {len(char_vocab)}")
+    char_vocab.insert(0, '<unk>')
+    char_vocab.insert(1, '<pad>')
+    char2idx = {char: idx for idx, char in enumerate(char_vocab)}
+    print(f"char2idx-length: {len(char2idx)}")
+
+    return char2idx, char_vocab
+
 
 
