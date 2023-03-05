@@ -1,0 +1,20 @@
+name: offline_training
+channels:
+  - defaults
+dependencies:
+  - python=3.8
+  - numpy
+  - pandas
+  - pytorch
+  - torchaudio
+  - torchvision
+  - pytorch-cuda=11.6
+  - transformers
+  - datasets
+  - nodejs
+  - notebook
+  - jupyter_contrib_nbextensions
+  - spacy
+  - jupyter
+prefix: /home/afroditi/anaconda3/envs/minichatgpt
+
