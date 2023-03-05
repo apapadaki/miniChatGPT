@@ -8,41 +8,33 @@ Download anaconda following the instructions in the [official website](https://d
 Create an environment.
 
 ```bash
-conda create -n minichatgpt python=3.8 # create an environment called 'minichatgpt' with Python version 3.8
+conda env create -f environment.yml #this should be executed in the `offline_training` directory
 
-conda activate minichatgpt # activate the environment
+conda activate offline_training # activate the environment
 ```
 
-Install the following packages:
+[//]: # (Install the following packages:)
 
-* `conda install numpy`
 
-* `conda install pandas`
+[//]: # (* [PyTorch]&#40;https://pytorch.org/&#41; - select you based your preferences and hardware characteristics. Pick the GPU-supported installation.)
 
-* [PyTorch](https://pytorch.org/) - select you based your preferences and hardware characteristics. Pick the GPU-supported installation.
+[//]: # ()
+[//]: # (* [Transformers]&#40;https://huggingface.co/docs/transformers/installation&#41;)
 
-* [Transformers](https://huggingface.co/docs/transformers/installation)
+[//]: # ()
+[//]: # (* [Hugginface Datasets]&#40;https://huggingface.co/docs/datasets/installation&#41;)
 
-* [Hugginface Datasets](https://huggingface.co/docs/datasets/installation)
-
-* [titoken](https://github.com/openai/tiktoken)
-
-* `pip install tqdm`
-
-* `pip install wandb`
-
-* `conda install -c conda-forge notebook`
+[//]: # ()
+[//]: # (* [titoken]&#40;https://github.com/openai/tiktoken&#41;)
 
 ### Pre-process dataset
 ```bash
-conda activate minichatgpt # run this command if environment is not already activated
+conda activate offline_training # run this command if environment is not already activated
 
 jupyter notebook # start notebook server
 ```
 Select `notebooks\{dataset}_data_preprocessing.ipynb` notebook, where `dataset` is one of the supported datasets, and run all cells.
 
-
-TBC
 
 [//]: # (### Download Pre-trained models)
 

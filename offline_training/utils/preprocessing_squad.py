@@ -12,12 +12,12 @@ nlp = spacy.load('en_core_web_sm')
 
 
 def load_json(filename):
-    '''
+    """
     Input:
      filename: json file location and name
 
     returns: data from the json file
-    '''
+    """
 
     data = json.load(open(filename))
     print('Length of data: ', len(data['data']))
@@ -28,21 +28,23 @@ def load_json(filename):
 
 
 def add_to_dict(input_list):
-    _dict = {}
-    _dict['id'] = input_list[0]
-    _dict['context'] = input_list[1]
-    _dict['question'] = input_list[2]
-    _dict['label'] = input_list[3]
-    _dict['answer'] = input_list[4]
+    """
+    List to dictionary converter.
+
+    :param input_list: add to a dictionary a list of the form [_id, context, qa, [ans_start, ans_end], ans]
+    :return:
+    """
+    _dict = {'id': input_list[0], 'context': input_list[1], 'question': input_list[2], 'label': input_list[3],
+             'answer': input_list[4]}
     return _dict
 
 
 def parse_data(data_dict):
-    '''
+    """
     :inputs: data_dict: parse a dictionary
 
     :return: a list of dictionaries with keys ['context','query','label']
-    '''
+    """
     data_list = []
     for paragraphs in data_dict:
 
@@ -64,20 +66,20 @@ def parse_data(data_dict):
 
 
 def remove_redundant_symbols(input_data):
-    '''
+    """
     removes extra symbols from context
-    :return: filtered context
-    '''
+    :return: filtered data
+    """
 
     return re.sub(r'\s', ' ', input_data)
 
 
 def aggregate_text(dataframes):
-    '''
+    """
     Aggregate the text from context and questions to build a vocabulary
     :param dataframes: list of dataframes
     :return: a list of context and questions
-    '''
+    """
 
     text_list = []
     total = 0
@@ -94,14 +96,14 @@ def aggregate_text(dataframes):
 
 
 def create_word_vocabulary(text_list):
-    '''
+    """
     Create a world vocabulary from text.
     :param text_list: aggregated list of context and questions
     :return:
         dict word2idx: word to index mapping of words
         dict idx2word: index to word mapping
         list word_vocab: list of words sorted by frequency
-    '''
+    """
     words_list = []
     for sentence in text_list:
         for word in nlp(sentence, disable=['parser', 'tagger', 'ner', 'lemmatizer']):
@@ -125,7 +127,7 @@ def create_word_vocabulary(text_list):
 
 
 def cq_to_id_converter(text, word2idx):
-    '''
+    """
     Converts context and questions text to their respective ids by mapping each word
     using word2idx. Input text is tokenized using spacy tokenizer first.
 
@@ -135,7 +137,7 @@ def cq_to_id_converter(text, word2idx):
 
     :raises assertion error: sanity check
 
-    '''
+    """
 
     text_tokens = [w.text for w in nlp(text, disable=['parser', 'tagger', 'ner', 'lemmatizer'])]
     text_ids = [word2idx[word] for word in text_tokens]
@@ -145,13 +147,13 @@ def cq_to_id_converter(text, word2idx):
 
 
 def get_error_indices(df, idx2word):
-    '''
+    """
     Finds and returns the indices with tokenization errors.
     :param df: dataframe w/ training or testing data
     :param idx2word: mapping of ids to words
     :return:
         err_idx: indices with tokenization errors
-    '''
+    """
 
     start_value_error = []
     end_value_error = []
@@ -170,17 +172,17 @@ def get_error_indices(df, idx2word):
 
         try:
             start_idx = starts.index(answer_start)
-        except:
+        except (KeyError, IndexError):
             start_value_error.append(index)
         try:
             end_idx = ends.index(answer_end)
-        except:
+        except (KeyError, IndexError):
             end_value_error.append(index)
 
         try:
             assert idx2word[row['context_ids'][start_idx]] == answer_tokens[0]
             assert idx2word[row['context_ids'][end_idx]] == answer_tokens[-1]
-        except:
+        except (KeyError, IndexError):
             assert_error.append(index)
     err_idx = set(start_value_error + end_value_error + assert_error)
     print(f"Number of error indices: {len(err_idx)}")
@@ -188,13 +190,13 @@ def get_error_indices(df, idx2word):
 
 
 def index_answer(row, idx2word):
-    '''
+    """
 
     :param row: row of the dataframe or one training example
     :param idx2word:
     :return: tuple of start and end positions of answer by calculating
     spans.
-    '''
+    """
 
     context_span = [(word.idx, word.idx + len(word.text)) for word in
                     nlp(row.context, disable=['parser', 'tagger', 'ner', 'lemmatizer'])]
@@ -206,9 +208,8 @@ def index_answer(row, idx2word):
     end_idx = ends.index(answer_end)
 
     ans_toks = [w.text for w in nlp(row.answer, disable=['parser', 'tagger', 'ner', 'lemmatizer'])]
-    ans_start = ans_toks[0]
-    ans_end = ans_toks[-1]
-    assert idx2word[row.context_ids[start_idx]] == ans_start
-    assert idx2word[row.context_ids[end_idx]] == ans_end
+
+    assert idx2word[row.context_ids[start_idx]] == ans_toks[0]
+    assert idx2word[row.context_ids[end_idx]] == ans_toks[-1]
 
     return [start_idx, end_idx]
