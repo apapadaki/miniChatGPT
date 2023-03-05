@@ -172,17 +172,17 @@ def get_error_indices(df, idx2word):
 
         try:
             start_idx = starts.index(answer_start)
-        except (KeyError, IndexError):
+        except:
             start_value_error.append(index)
         try:
             end_idx = ends.index(answer_end)
-        except (KeyError, IndexError):
+        except:
             end_value_error.append(index)
 
         try:
             assert idx2word[row['context_ids'][start_idx]] == answer_tokens[0]
             assert idx2word[row['context_ids'][end_idx]] == answer_tokens[-1]
-        except (KeyError, IndexError):
+        except:
             assert_error.append(index)
     err_idx = set(start_value_error + end_value_error + assert_error)
     print(f"Number of error indices: {len(err_idx)}")
