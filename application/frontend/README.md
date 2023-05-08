@@ -28,6 +28,8 @@ This starts your app in development mode, rebuilding assets on file changes.
 
 ## Deployment (Docker)
 
+Run the following commands from your terminal in the /frontend directory.
+
 Build docker image:
 
 ```sh
