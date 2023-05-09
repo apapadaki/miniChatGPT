@@ -26,16 +26,20 @@ npm run dev
 This starts your app in development mode, rebuilding assets on file changes.
 [Click here](http://localhost:3000) to be navigated to the app.
 
-## Deployment
+## Deployment (Docker)
 
-First, build your app for production:
+Run the following commands from your terminal in the /frontend directory.
 
-```sh
-npm run build
-```
-
-Then run the app in production mode:
+Build docker image:
 
 ```sh
-npm start
+docker build . -t minichatgpt/frontend
 ```
+
+Create and start the container:
+
+```sh
+docker run -p 3000:3000 minichatgpt/frontend
+```
+
+[Click here](http://localhost:3000) to be navigated to the app.
